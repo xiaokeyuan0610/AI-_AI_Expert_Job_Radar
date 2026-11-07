@@ -29,7 +29,7 @@ jobs:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
           TLABEL_COOKIE: ${{ secrets.TLABEL_COOKIE }}
-          COREXPERT_COOKIE: ${{ secrets.COREXPERT_COOKIE }}
+          COREXPERT_COOKIE: ${{ secrets.COREXPERT_COOKIE || secrets.CARD_LIST }}
       - uses: actions/cache/save@v4
         if: always()
         with:
