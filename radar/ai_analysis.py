@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import urllib.request
+import urllib.error
 from urllib.parse import urlsplit
 from .bencher import NoRedirect
 
@@ -104,6 +105,13 @@ def enrich_jobs(jobs):
             print(f"AI analyzed {len(batch)} jobs", flush=True)
         except Exception as error:
             print("AI analysis failed: " + type(error).__name__, flush=True)
+            if isinstance(error, urllib.error.HTTPError):
+                print("AI HTTP status: " + str(error.code), flush=True)
+                # Only print predefined diagnostic labels, never raw provider responses.
+                detail = error.read(8192).decode("utf-8", errors="replace").lower()
+                labels = [word for word in ("insufficient_quota", "invalid_api_key", "model_not_found", "unsupported", "no available channel", "无可用渠道", "余额不足", "无权", "模型不存在") if word in detail]
+                if labels:
+                    print("AI error category: " + ", ".join(labels), flush=True)
             enriched.extend(dict(job, analysis_status="规则初筛，AI分析暂不可用") for job in jobs[start:])
             return enriched
     enriched.extend(dict(job, analysis_status="规则初筛，本次AI分析数量上限30条") for job in jobs[limit:])

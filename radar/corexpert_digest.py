@@ -57,9 +57,12 @@ def build_digest(jobs):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--send", action="store_true")
+    parser.add_argument("--require-ai", action="store_true")
     args = parser.parse_args()
     jobs = collect_corexpert({})
     enriched = enrich_jobs([job for job in jobs if suitability(job)])
+    if args.require_ai and (not enriched or any(not job.get("analysis") for job in enriched)):
+        raise RuntimeError("AI validation incomplete; no Feishu test sent")
     analyzed = {job["source_id"]: job for job in enriched}
     jobs = [analyzed.get(job["source_id"], job) for job in jobs]
     sections, selected = build_digest(jobs)

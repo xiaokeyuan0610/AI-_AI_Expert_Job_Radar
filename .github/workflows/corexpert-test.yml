@@ -13,7 +13,7 @@ jobs:
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
-      - run: python -m radar.corexpert_digest --send
+      - run: python -m radar.corexpert_digest --send --require-ai
         env:
           AI_BASE_URL: https://api.metarouters.org/v1
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
