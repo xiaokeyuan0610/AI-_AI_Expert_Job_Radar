@@ -47,13 +47,14 @@ class AnalysisDetailsTests(unittest.TestCase):
     @patch("radar.ai_analysis.urllib.request.build_opener")
     def test_structured_output_and_permission_evidence(self, opener):
         item = {field: "简短分析" for field in TEXT_FIELDS}
-        item.update(index=0, fit_score=80, ai_permission="allowed", permission_evidence="不存在的证据")
+        item.update(index=0, fit_score=80, ai_permission="allowed", permission_evidence="不存在的证据", automation_level="full")
         response = MagicMock()
         response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {
             "content": json.dumps({"jobs": [item]})}}]}).encode()
         opener.return_value.open.return_value.__enter__.return_value = response
         result = analyze_batch([{"title": "建筑", "description": "招聘建筑专家"}], {}, "fake-test-key", "gpt-5-mini")
         self.assertEqual(result[0]["analysis"]["ai_permission"], "unknown")
+        self.assertEqual(result[0]["analysis"]["automation_level"], "partial")
         self.assertEqual(result[0]["analysis_status"], "OpenAI已分析")
         alternate = analyze_batch([{"title": "建筑"}], {}, "provider-test-key", "provider-model", "https://api.metarouters.org/v1")
         self.assertEqual(alternate[0]["analysis_status"], "AI已分析")
@@ -64,6 +65,11 @@ class AnalysisDetailsTests(unittest.TestCase):
         self.assertNotIn("reasoning_effort", body)
         self.assertNotIn("store", body)
         self.assertEqual(request.get_header("Authorization"), "Bearer provider-test-key")
+        item.update(ai_permission="allowed", permission_evidence="允许AI", automation_level="full", human_review="专业审核")
+        response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {
+            "content": json.dumps({"jobs": [item]})}}]}).encode()
+        guarded = analyze_batch([{"title": "建筑", "description": "允许AI"}], {}, "test", "model")
+        self.assertEqual(guarded[0]["analysis"]["automation_level"], "partial")
         item["index"] = 2
         response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {
             "content": json.dumps({"jobs": [item]})}}]}).encode()

@@ -39,11 +39,26 @@ def card_message(jobs, statuses=(), *, test=False, checked=None, part=None):
                  "**推荐**　" + brief(analysis.get("fit_reason") or "、".join(job.get("reasons", [])) or "方向相关，需核对资历"),
                  "**门槛**　" + brief(analysis.get("requirements") or job.get("qualification") or "请查看项目详情")]
         if analysis:
-            lines.append("**AI辅助**　" + brief(analysis.get("ai_steps")))
             lines.append("**注意**　" + brief(analysis.get("risks")))
-        else:
-            lines.append("**AI辅助**　" + brief(ai_workflow(job)))
         elements.append({"tag": "div", "text": {"tag": "lark_md", "content": "\n".join(lines)}})
+        if analysis and analysis.get("automation_level"):
+            level = {"full": "有条件全自动", "partial": "部分自动化", "human": "人工主导", "insufficient": "资料不足"}[analysis["automation_level"]]
+            if analysis.get("ai_permission") == "prohibited":
+                plan = "**⚙ 自动化实施方案 · 人工主导**\n原文限制AI使用，按平台要求人工完成。"
+            else:
+                plan = "\n".join([
+                    "**⚙ 自动化实施方案 · " + level + "**",
+                    "**输入**　" + brief(analysis.get("automation_input"), 75),
+                    "**工具**　" + brief(analysis.get("automation_tools"), 75),
+                    "**流程**　" + brief(analysis.get("ai_steps"), 180),
+                    "**产出**　" + brief(analysis.get("deliverables"), 75),
+                    "**你负责**　" + brief(analysis.get("human_review"), 85),
+                    "**落地难点**　" + brief(analysis.get("automation_blockers"), 85)])
+                if analysis.get("ai_permission") != "allowed":
+                    plan += "\n平台是否允许AI尚待确认。"
+        else:
+            plan = "**⚙ 自动化实施方案**\n尚未生成，需AI分析岗位细节后判断。"
+        elements.append({"tag": "div", "text": {"tag": "lark_md", "content": plan}})
         url = job.get("url", "")
         if urlsplit(url).scheme == "https":
             label = "前往项目广场" if "corexpertdata.com" in url else "查看岗位详情"
@@ -55,7 +70,7 @@ def card_message(jobs, statuses=(), *, test=False, checked=None, part=None):
     if failures:
         elements.append({"tag": "div", "text": {"tag": "lark_md", "content": "⚠️ 检查失败　" + brief("、".join(failures), 150)}})
     analyzed = sum(bool(job.get("analysis")) for job in jobs)
-    note = f"AI分析 {analyzed}/{len(jobs)} · 未分析项为规则初筛 · 未核实资历最高4星\nAI使用需获平台许可，专业交付由你复核。"
+    note = f"AI分析 {analyzed}/{len(jobs)} · 未分析项为规则初筛 · 未核实资历最高4星\n自动化方案为待实施设计，尚未执行岗位任务。"
     if jobs and any("corexpertdata.com" in job.get("url", "") for job in jobs):
         note += "在项目广场按标题搜索。"
     note += f"\nAI Expert Job Radar v{__version__}"
