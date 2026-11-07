@@ -5,6 +5,7 @@ import urllib.request
 import urllib.error
 from urllib.parse import urlsplit
 from .bencher import NoRedirect
+from .profile import load_profile
 
 TEXT_FIELDS = ("summary", "fit_reason", "requirements", "deliverables", "ai_steps", "human_review", "risks")
 
@@ -39,6 +40,8 @@ def analyze_batch(jobs, profile, key, model, base_url="https://api.openai.com/v1
         "资料不足写待确认，不编造资格、薪资、截止时间。ai_permission默认unknown，"
         "只有招聘原文明确允许或禁止AI才设allowed或prohibited并在permission_evidence逐字引用证据。"
         "有专业执业要求时保留人工判断，禁止建议伪造经历或绕过平台考核。"
+        "用户画像是用户简历自述，不是外部资质认证。不要在输出中复述个人院校、身份、具体项目名或详细项目数量。"
+        "只概括与岗位相关的技能和经验。已列软件不等于熟练或多年经验，未来发展目标不等于已交付经验。"
         "严格返回对象jobs数组，每项包含index、fit_score、summary、fit_reason、requirements、deliverables、"
         "ai_steps、human_review、risks、ai_permission和permission_evidence，文本字段必须为字符串。"
     )
@@ -96,7 +99,7 @@ def enrich_jobs(jobs):
         return [dict(job, analysis_status="规则初筛，AI未配置") for job in jobs]
     if not model:
         return [dict(job, analysis_status="规则初筛，AI模型未配置") for job in jobs]
-    profile = json.loads(Path("config/profile.json").read_text(encoding="utf-8"))
+    profile = load_profile()
     limit = 30
     enriched = []
     for start in range(0, min(len(jobs), limit), 5):

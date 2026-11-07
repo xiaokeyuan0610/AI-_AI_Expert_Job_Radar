@@ -66,6 +66,10 @@ Actions cache 保存跨运行去重状态，可能被清理或过期，丢失后
 
 ## AI岗位分析配置（v0.4.0）
 
+个人画像请使用被Git忽略的 `config/profile.private.json`，云端使用GitHub Secret `USER_PROFILE_JSON`。
+读取优先级为Secret、本地私密画像、通用公开画像。原简历不得进入仓库，不在画像内保存联系方式。
+公开源代码仅包含读取机制，不包含个人学历、经历或技能。模型摘要只概括岗位相关能力。
+
 云端工作流已选择 `https://api.metarouters.org/v1`，该地址不是密钥。
 在仓库 Settings → Secrets and variables → Actions 中配置：
 

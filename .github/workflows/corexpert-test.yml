@@ -18,6 +18,7 @@ jobs:
           AI_BASE_URL: https://api.metarouters.org/v1
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
           AI_MODEL: ${{ vars.AI_MODEL }}
+          USER_PROFILE_JSON: ${{ secrets.USER_PROFILE_JSON }}
           COREXPERT_COOKIE: ${{ secrets.COREXPERT_COOKIE || secrets.CARD_LIST }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
