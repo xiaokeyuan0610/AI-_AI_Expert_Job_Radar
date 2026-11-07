@@ -37,6 +37,9 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
         except Exception:
             failed = True
             statuses.append(name + ": 采集失败（不是无任务）")
+    if push:
+        for status in statuses:
+            print(status, flush=True)
     ordered = sorted(pending.items(), key=lambda item: (item[1]["platform_name"], -item[1]["score"]))
     batch_size = rules.get("batch_size", 10)
     if batch_size < 1:
