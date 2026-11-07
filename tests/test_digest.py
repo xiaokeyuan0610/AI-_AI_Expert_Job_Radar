@@ -13,7 +13,7 @@ class DigestTests(unittest.TestCase):
                             "url": "https://example.com/job", "platform_name": "平台甲"}], [])
         text = payload["content"]["text"]
         self.assertIn("【平台甲】", text)
-        self.assertIn("做什么：评审视频生成质量", text)
+        self.assertIn("做什么　评审视频生成质量", text)
         self.assertNotIn("其他内容", text)
 
     @patch("radar.__main__.send")

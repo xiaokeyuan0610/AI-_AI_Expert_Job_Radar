@@ -1,6 +1,7 @@
 import hashlib
 import re
 from . import __version__
+from .recommendations import recommendation, ai_workflow
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 
@@ -47,12 +48,15 @@ def message(jobs, statuses, demo=False):
             lines.extend(["", "【" + platform + "】"])
             current_platform = platform
         salary = job.get("salary", "报酬见详情").replace("hour", "小时").replace("BY_COUNT", "按量").replace("BY_TIME", "按时")
-        lines.extend(["", f'{number}. {job["title"][:70]}', "做什么：" + summarize(job), "报酬：" + salary, job["url"]])
+        lines.extend(["", f'{number}. {job["title"][:70]}', recommendation(job),
+                      "做什么　" + summarize(job), "报酬　" + salary,
+                      "AI参与　" + ai_workflow(job), job["url"]])
     if not jobs:
         lines.append("今天暂无新的匹配机会。")
     successful = sum(": 读取 " in status for status in statuses)
     failures = [status.split(":", 1)[0] for status in statuses if "采集失败" in status]
-    lines.extend(["", f"已检查{successful}个平台｜其余未接入", "方向初筛，资历与报酬以详情为准。"])
+    lines.extend(["", f"已检查{successful}个平台｜其余未接入",
+                  "星级是方向匹配初评，4星强相关、3星可拓展；5星需资历核对。报酬以详情为准。"])
     if failures:
         lines.append("检查失败：" + "、".join(failures))
     if any("TLABEL_COOKIE" in status for status in statuses):

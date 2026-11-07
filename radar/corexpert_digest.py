@@ -4,17 +4,20 @@ from . import __version__
 from .corexpert import collect_corexpert
 from .core import summarize
 from .feishu import send
+from .recommendations import DESIGN_TERMS, VISUAL_TERMS, contains, recommendation, ai_workflow
 
 
 def suitability(job):
     title = job["title"]
     if any(term in title for term in ("金融", "医学", "医疗", "法律", "英语", "方言", "少儿", "数学")):
         return None
-    if any(term in title for term in ("影视", "摄影", "视觉", "美学", "图像", "视频", "媒体", "文化", "娱乐", "工业设计", "UI/UX")):
+    if contains(title, DESIGN_TERMS):
+        return "优先核对", "建筑、空间或室内设计方向，可结合专业经历评估"
+    if contains(title, VISUAL_TERMS):
         return "优先核对", "影视视觉、数字内容或设计类专业任务"
     if "多学科" in title and any(term in job.get("qualification", job["description"])
-                                 for term in ("视觉传达", "工业设计", "影视")):
-        return "优先核对", "招募专业包含视觉传达或设计方向，需要核对学历背景"
+                                 for term in ("视觉传达", "工业设计", "影视", "建筑", "室内", "城乡规划", "风景园林")):
+        return "优先核对", "招募专业包含视觉、建筑或设计方向，需要核对学历背景"
     if any(term in title for term in ("企业场景", "办公工具", "多职业")):
         return "可拓展", "可结合真实工作经验参与任务设计或成果评价"
     return None
@@ -26,14 +29,16 @@ def build_digest(jobs):
     selected.sort(key=lambda item: item[1][0] != "优先核对")
     sections = [f"【CoreXpert 专项测试·筛选校正版】AI Expert Job Radar v{__version__}",
                 f"实时检查{len(jobs)}个项目，筛选{len(selected)}个相关机会。",
-                "按你的影视视觉、模型评测、Rubric及任务环境方向初筛，资历尚待核对。"]
+                "按建筑空间室内设计、影视视觉、模型评测及任务环境方向初筛。",
+                "★★★★☆ 方向强相关；★★★☆☆ 可拓展；★★★★★ 需要资历确认。"]
     for number, (job, fit) in enumerate(selected, 1):
         description = dict(job, description=job["description"].split(" 要求：", 1)[0])
         requirements = re.sub(r"\s+", " ", job.get("qualification", "")).strip()
         sections.append("\n".join(["", f"{number}. {job['title']}【{fit[0]}】",
+            recommendation(job),
             "做什么　" + summarize(description), "与你的关联　" + fit[1],
             "报酬　" + job["salary"], "门槛　" + (requirements[:130] or "请查看项目详情")
-            + ("…" if len(requirements) > 130 else "")]))
+            + ("…" if len(requirements) > 130 else ""), "AI参与　" + ai_workflow(job)]))
     if not selected:
         sections.append("当前未筛出符合上述方向的项目。")
     sections.extend(["", "入口　https://www.corexpertdata.com/operation/s/recruitment-square",

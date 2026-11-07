@@ -3,6 +3,11 @@
   "batch_size": 10,
   "categories": [
     {
+      "name": "建筑、空间与室内设计",
+      "weight": 25,
+      "terms": ["建筑", "室内设计", "室内", "空间设计", "空间规划", "景观设计", "城乡规划", "风景园林", "bim", "revit", "sketchup", "rhino", "autocad", "architecture", "interior design", "spatial design"]
+    },
+    {
       "name": "视频素材制作（邻近方向）",
       "weight": 20,
       "terms": ["vlog", "视频拍摄", "摄影摄像"]
