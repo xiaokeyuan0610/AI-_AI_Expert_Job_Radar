@@ -1,0 +1,6 @@
+{
+  "interests": ["建筑与空间设计", "室内设计", "影视与视觉美学", "多模态模型评测", "图像编辑", "视频生成与理解", "数据质量", "Rubric", "Benchmark", "RL Environment"],
+  "confirmed_qualifications": [],
+  "unknown": ["学历与专业", "各方向工作年限", "软件熟练度", "每周可投入时间", "最低报酬"],
+  "instruction": "兴趣不等于职业资历。没有确认的信息必须标为待核实。"
+}

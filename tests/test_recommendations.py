@@ -17,7 +17,7 @@ class RecommendationTests(unittest.TestCase):
     def test_five_stars_requires_confirmed_qualification(self):
         job = {"title": "室内设计专家", "description": ""}
         self.assertTrue(recommendation(job).startswith("★★★★☆"))
-        self.assertTrue(recommendation(dict(job, qualification_confirmed=True)).startswith("★★★★★"))
+        self.assertTrue(recommendation(dict(job, qualification_confirmed=True, salary="100元/小时", deadline="2099-01-01")).startswith("★★★★★"))
         self.assertTrue(recommendation(dict(job, qualification_confirmed=False)).startswith("★★☆☆☆"))
 
     def test_both_messages_have_visual_rating_and_workflow(self):

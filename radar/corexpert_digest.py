@@ -5,6 +5,8 @@ from .corexpert import collect_corexpert
 from .core import summarize
 from .feishu import send
 from .recommendations import DESIGN_TERMS, VISUAL_TERMS, contains, recommendation, ai_workflow
+from .details import pay_text, deadline_text
+from .ai_analysis import enrich_jobs
 
 
 def suitability(job):
@@ -30,15 +32,21 @@ def build_digest(jobs):
     sections = [f"【CoreXpert 专项测试·筛选校正版】AI Expert Job Radar v{__version__}",
                 f"实时检查{len(jobs)}个项目，筛选{len(selected)}个相关机会。",
                 "按建筑空间室内设计、影视视觉、模型评测及任务环境方向初筛。",
-                "★★★★☆ 方向强相关；★★★☆☆ 可拓展；★★★★★ 需要资历确认。"]
+                "星级综合方向、资格、报酬及期限信息。未知资历最高4星。"]
     for number, (job, fit) in enumerate(selected, 1):
         description = dict(job, description=job["description"].split(" 要求：", 1)[0])
         requirements = re.sub(r"\s+", " ", job.get("qualification", "")).strip()
         sections.append("\n".join(["", f"{number}. {job['title']}【{fit[0]}】",
             recommendation(job),
             "做什么　" + summarize(description), "与你的关联　" + fit[1],
-            "报酬　" + job["salary"], "门槛　" + (requirements[:130] or "请查看项目详情")
+            "报酬　" + pay_text(job), "截止　" + deadline_text(job),
+            "门槛　" + (job.get("analysis", {}).get("requirements") or requirements[:130] or "请查看项目详情")
             + ("…" if len(requirements) > 130 else ""), "AI参与　" + ai_workflow(job)]))
+        if job.get("analysis"):
+            analysis = job["analysis"]
+            sections.append("\n".join(["推荐理由　" + analysis["fit_reason"],
+                "交付物　" + analysis["deliverables"], "注意　" + analysis["risks"]]))
+        sections.append(job.get("analysis_status", "规则初筛"))
     if not selected:
         sections.append("当前未筛出符合上述方向的项目。")
     sections.extend(["", "入口　https://www.corexpertdata.com/operation/s/recruitment-square",
@@ -51,6 +59,9 @@ def main():
     parser.add_argument("--send", action="store_true")
     args = parser.parse_args()
     jobs = collect_corexpert({})
+    enriched = enrich_jobs([job for job in jobs if suitability(job)])
+    analyzed = {job["source_id"]: job for job in enriched}
+    jobs = [analyzed.get(job["source_id"], job) for job in jobs]
     sections, selected = build_digest(jobs)
     batches = []
     current = ""

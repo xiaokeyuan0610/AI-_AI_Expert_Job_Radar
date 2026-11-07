@@ -7,6 +7,9 @@ from .feishu import send
 from . import __version__
 from .tencent import LoginRequired
 from .corexpert import CoreSessionRequired
+from .ai_analysis import enrich_jobs
+from .details import deadline_at
+from datetime import datetime, timezone
 
 
 def run(config, rules, state_path, push=False, demo=False, test_send=False):
@@ -24,6 +27,9 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
             rows = collect(platform)
             statuses.append(f"{name}: 读取 {len(rows)} 条")
             for row in rows:
+                deadline = deadline_at(row)
+                if deadline and deadline <= datetime.now(timezone.utc):
+                    continue
                 points, reasons = score(row, rules)
                 key = identity(row)
                 if points >= rules["threshold"] and key not in seen:
@@ -42,13 +48,17 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
         for status in statuses:
             print(status, flush=True)
     ordered = sorted(pending.items(), key=lambda item: (item[1]["platform_name"], -item[1]["score"]))
+    enriched = enrich_jobs([job for _, job in ordered])
+    ordered = [(key, job) for (key, _), job in zip(ordered, enriched)]
     batch_size = rules.get("batch_size", 10)
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     batches = []
     for entry in ordered:
+        candidate = (batches[-1] if batches else []) + [entry]
+        oversized = len(json.dumps(message([job for _, job in candidate], statuses, demo), ensure_ascii=False).encode()) > 17500
         if (not batches or len(batches[-1]) >= batch_size
-                or batches[-1][-1][1]["platform_name"] != entry[1]["platform_name"]):
+                or batches[-1][-1][1]["platform_name"] != entry[1]["platform_name"] or oversized):
             batches.append([])
         batches[-1].append(entry)
     batches = batches or [[]]

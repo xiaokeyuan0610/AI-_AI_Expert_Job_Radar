@@ -30,6 +30,8 @@ jobs:
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
           TLABEL_COOKIE: ${{ secrets.TLABEL_COOKIE }}
           COREXPERT_COOKIE: ${{ secrets.COREXPERT_COOKIE || secrets.CARD_LIST }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
       - uses: actions/cache/save@v4
         if: always()
         with:

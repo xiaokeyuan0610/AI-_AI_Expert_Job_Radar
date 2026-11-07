@@ -49,6 +49,7 @@ def normalize(kind, row):
     return {"source_id": f"{kind}:{identifier}", "title": title,
             "description": plain(row.get("description")), "url": url,
             "salary": salary, "published_at": published,
+            "deadline": row.get("end_date") if kind == "fellow_public" else None,
             "qualification": "专业资格待核实；时间为平台记录，首次发现不等于今日新增"}
 
 

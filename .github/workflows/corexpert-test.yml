@@ -18,3 +18,5 @@ jobs:
           COREXPERT_COOKIE: ${{ secrets.COREXPERT_COOKIE || secrets.CARD_LIST }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}

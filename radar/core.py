@@ -2,6 +2,7 @@ import hashlib
 import re
 from . import __version__
 from .recommendations import recommendation, ai_workflow
+from .details import pay_text, deadline_text
 from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
 
 
@@ -31,6 +32,8 @@ def score(job, rules):
 
 
 def summarize(job):
+    if job.get("analysis"):
+        return job["analysis"]["summary"]
     text = re.sub(r"\s+", " ", job.get("description", "")).strip()
     sentences = [part.strip() for part in re.split(r"[。；\n]", text) if part.strip()]
     useful = next((part for part in sentences if any(word in part for word in
@@ -47,16 +50,21 @@ def message(jobs, statuses, demo=False):
         if platform != current_platform:
             lines.extend(["", "【" + platform + "】"])
             current_platform = platform
-        salary = job.get("salary", "报酬见详情").replace("hour", "小时").replace("BY_COUNT", "按量").replace("BY_TIME", "按时")
+        salary = pay_text(job)
         lines.extend(["", f'{number}. {job["title"][:70]}', recommendation(job),
-                      "做什么　" + summarize(job), "报酬　" + salary,
+                      "做什么　" + summarize(job), "报酬　" + salary, "截止　" + deadline_text(job),
                       "AI参与　" + ai_workflow(job), job["url"]])
+        if job.get("analysis"):
+            analysis = job["analysis"]
+            lines.extend(["推荐理由　" + analysis["fit_reason"], "门槛　" + analysis["requirements"],
+                          "交付物　" + analysis["deliverables"], "注意　" + analysis["risks"]])
+        lines.append(job.get("analysis_status", "规则初筛"))
     if not jobs:
         lines.append("今天暂无新的匹配机会。")
     successful = sum(": 读取 " in status for status in statuses)
     failures = [status.split(":", 1)[0] for status in statuses if "采集失败" in status]
     lines.extend(["", f"已检查{successful}个平台｜其余未接入",
-                  "星级是方向匹配初评，4星强相关、3星可拓展；5星需资历核对。报酬以详情为准。"])
+                  "综合方向40、资格25、报酬信息15、期限信息10、AI可用性10分。未知资历最高4星。报酬以详情为准。"])
     if failures:
         lines.append("检查失败：" + "、".join(failures))
     if any("TLABEL_COOKIE" in status for status in statuses):
