@@ -34,8 +34,9 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
         except LoginRequired:
             failed = True
             statuses.append(name + ": 采集失败，请重新登录腾讯并更新 GitHub Secret TLABEL_COOKIE")
-        except Exception:
+        except Exception as error:
             failed = True
+            print(f"{name}: error_type={type(error).__name__}", flush=True)
             statuses.append(name + ": 采集失败（不是无任务）")
     if push:
         for status in statuses:

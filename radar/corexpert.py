@@ -12,6 +12,10 @@ class CoreSessionRequired(Exception):
     pass
 
 
+class CoreCookieFormatError(Exception):
+    pass
+
+
 def request_page(page, cookie):
     body = {"PageRequest": {"PageNo": page, "PageSize": 12},
             "SearchGroup": {"LogicalOperator": "and", "Conditions": []}, "TabType": 0}
@@ -59,7 +63,7 @@ def collect_corexpert(platform):
     if not cookie:
         raise CoreSessionRequired()
     if "\r" in cookie or "\n" in cookie or cookie.lower().startswith("cookie:"):
-        raise ValueError("Invalid COREXPERT_COOKIE format")
+        raise CoreCookieFormatError()
     jobs, identifiers = [], set()
     expected = None
     for page in range(50):
