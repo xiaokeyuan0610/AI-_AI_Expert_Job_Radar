@@ -2,6 +2,7 @@ import json
 import os
 from pathlib import Path
 import urllib.request
+from urllib.parse import urlsplit
 from .bencher import NoRedirect
 
 TEXT_FIELDS = ("summary", "fit_reason", "requirements", "deliverables", "ai_steps", "human_review", "risks")
@@ -19,7 +20,11 @@ def response_format():
                    "required": ["jobs"]}}}
 
 
-def analyze_batch(jobs, profile, key, model):
+def analyze_batch(jobs, profile, key, model, base_url="https://api.openai.com/v1"):
+    endpoint = urlsplit(base_url)
+    if endpoint.scheme != "https" or not endpoint.hostname or endpoint.username or endpoint.password or endpoint.query or endpoint.fragment:
+        raise ValueError("AI base URL must be an HTTPS endpoint without credentials or query")
+    official = endpoint.hostname == "api.openai.com"
     source = [{"index": index, "title": job["title"],
                "description": job.get("description", "")[:6000],
                "qualification": job.get("qualification", "")[:1500]}
@@ -33,12 +38,18 @@ def analyze_batch(jobs, profile, key, model):
         "资料不足写待确认，不编造资格、薪资、截止时间。ai_permission默认unknown，"
         "只有招聘原文明确允许或禁止AI才设allowed或prohibited并在permission_evidence逐字引用证据。"
         "有专业执业要求时保留人工判断，禁止建议伪造经历或绕过平台考核。"
+        "严格返回对象jobs数组，每项包含index、fit_score、summary、fit_reason、requirements、deliverables、"
+        "ai_steps、human_review、risks、ai_permission和permission_evidence，文本字段必须为字符串。"
     )
-    body = {"model": model, "store": False, "reasoning_effort": "low", "max_completion_tokens": 6500,
-            "response_format": response_format(), "messages": [
+    body = {"model": model,
+            "response_format": response_format() if official else {"type": "json_object"}, "messages": [
                 {"role": "system", "content": instructions},
                 {"role": "user", "content": json.dumps({"profile": profile, "jobs": source}, ensure_ascii=False)}]}
-    request = urllib.request.Request("https://api.openai.com/v1/chat/completions",
+    if official:
+        body.update(store=False, reasoning_effort="low", max_completion_tokens=6500)
+    else:
+        body["max_tokens"] = 6500
+    request = urllib.request.Request(base_url.rstrip("/") + "/chat/completions",
         data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
     with urllib.request.build_opener(NoRedirect).open(request, timeout=90) as response:
         result = json.load(response)
@@ -66,25 +77,31 @@ def analyze_batch(jobs, profile, key, model):
             item["ai_permission"] = "unknown"
             item["permission_evidence"] = ""
         by_index[index] = item
-    return [dict(job, analysis=by_index[index], analysis_status="OpenAI已分析")
+    label = "OpenAI" if official else "AI"
+    return [dict(job, analysis=by_index[index], analysis_status=label + "已分析")
             for index, job in enumerate(jobs)]
 
 
 def enrich_jobs(jobs):
-    key = os.environ.get("OPENAI_API_KEY", "")
+    base_url = os.environ.get("AI_BASE_URL", "").strip() or "https://api.openai.com/v1"
+    alternate = urlsplit(base_url).hostname != "api.openai.com"
+    # Alternate services must never receive the user's OpenAI credential.
+    key = os.environ.get("AI_API_KEY" if alternate else "OPENAI_API_KEY", "").strip()
+    model = (os.environ.get("AI_MODEL", "") if alternate else os.environ.get("OPENAI_MODEL") or "gpt-5-mini").strip()
     if not jobs:
         return jobs
     if not key:
         return [dict(job, analysis_status="规则初筛，AI未配置") for job in jobs]
+    if not model:
+        return [dict(job, analysis_status="规则初筛，AI模型未配置") for job in jobs]
     profile = json.loads(Path("config/profile.json").read_text(encoding="utf-8"))
-    model = os.environ.get("OPENAI_MODEL") or "gpt-5-mini"
     limit = 30
     enriched = []
     for start in range(0, min(len(jobs), limit), 5):
         batch = jobs[start:min(start + 5, limit)]
         try:
-            enriched.extend(analyze_batch(batch, profile, key, model))
-            print(f"OpenAI analyzed {len(batch)} jobs with {model}", flush=True)
+            enriched.extend(analyze_batch(batch, profile, key, model, base_url))
+            print(f"AI analyzed {len(batch)} jobs", flush=True)
         except Exception as error:
             print("AI analysis failed: " + type(error).__name__, flush=True)
             enriched.extend(dict(job, analysis_status="规则初筛，AI分析暂不可用") for job in jobs[start:])

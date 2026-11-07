@@ -8,6 +8,22 @@ from radar.recommendations import recommendation
 
 
 class AnalysisDetailsTests(unittest.TestCase):
+    @patch.dict("os.environ", {"AI_BASE_URL": "https://api.metarouters.org/v1", "AI_API_KEY": "", "OPENAI_API_KEY": "must-not-send"}, clear=True)
+    @patch("radar.ai_analysis.analyze_batch")
+    def test_alternate_service_never_uses_openai_key(self, analyze):
+        self.assertIn("AI未配置", enrich_jobs([{"title": "建筑"}])[0]["analysis_status"])
+        analyze.assert_not_called()
+
+    @patch.dict("os.environ", {"AI_BASE_URL": "https://api.metarouters.org/v1", "AI_API_KEY": "test", "AI_MODEL": ""}, clear=True)
+    @patch("radar.ai_analysis.analyze_batch")
+    def test_alternate_service_requires_model(self, analyze):
+        self.assertIn("模型未配置", enrich_jobs([{"title": "建筑"}])[0]["analysis_status"])
+        analyze.assert_not_called()
+
+    def test_reject_insecure_endpoint(self):
+        with self.assertRaises(ValueError):
+            analyze_batch([], {}, "test", "model", "http://example.com/v1")
+
     def test_time_formats_and_urgency(self):
         now = datetime(2026, 11, 7, 9, tzinfo=CHINA)
         self.assertIn("24小时内", deadline_text({"deadline": "2026-11-08T00:00:00+08:00"}, now))
@@ -39,6 +55,15 @@ class AnalysisDetailsTests(unittest.TestCase):
         result = analyze_batch([{"title": "建筑", "description": "招聘建筑专家"}], {}, "fake-test-key", "gpt-5-mini")
         self.assertEqual(result[0]["analysis"]["ai_permission"], "unknown")
         self.assertEqual(result[0]["analysis_status"], "OpenAI已分析")
+        alternate = analyze_batch([{"title": "建筑"}], {}, "provider-test-key", "provider-model", "https://api.metarouters.org/v1")
+        self.assertEqual(alternate[0]["analysis_status"], "AI已分析")
+        request = opener.return_value.open.call_args.args[0]
+        self.assertEqual(request.full_url, "https://api.metarouters.org/v1/chat/completions")
+        body = json.loads(request.data)
+        self.assertEqual(body["response_format"], {"type": "json_object"})
+        self.assertNotIn("reasoning_effort", body)
+        self.assertNotIn("store", body)
+        self.assertEqual(request.get_header("Authorization"), "Bearer provider-test-key")
         item["index"] = 2
         response.read.return_value = json.dumps({"choices": [{"finish_reason": "stop", "message": {
             "content": json.dumps({"jobs": [item]})}}]}).encode()

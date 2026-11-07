@@ -26,6 +26,9 @@ jobs:
           restore-keys: radar-state-
       - run: python -m radar --send
         env:
+          AI_BASE_URL: https://api.metarouters.org/v1
+          AI_API_KEY: ${{ secrets.AI_API_KEY }}
+          AI_MODEL: ${{ vars.AI_MODEL }}
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
           TLABEL_COOKIE: ${{ secrets.TLABEL_COOKIE }}

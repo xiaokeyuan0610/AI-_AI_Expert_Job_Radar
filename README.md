@@ -64,6 +64,20 @@ Actions cache 保存跨运行去重状态，可能被清理或过期，丢失后
 正式长期使用建议迁移到持久数据库；本地与云端状态不自动共享。
 定时安排、状态保存和Secrets均已预留，但没有真实平台时不可启用。
 
+## AI岗位分析配置（v0.4.0）
+
+云端工作流已选择 `https://api.metarouters.org/v1`，该地址不是密钥。
+在仓库 Settings → Secrets and variables → Actions 中配置：
+
+- Secrets：`AI_API_KEY`，填写此服务商颁发的密钥。
+- Variables：`AI_MODEL`，填写服务商调用示例中 `model` 的准确标识，套餐名称不能代替模型标识。
+
+本地运行时设置同名环境变量，并设置 `AI_BASE_URL=https://api.metarouters.org/v1`。
+代码尝试使用兼容的 `/chat/completions` 和 JSON 对象响应，实际兼容性以验证结果为准。
+岗位标题、描述、要求和用户画像会发送给所选服务商，不发送采集Cookie或飞书凭据。
+第三方接口只读取 `AI_API_KEY`，不会使用 `OPENAI_API_KEY`。缺少密钥、模型或调用失败时明确显示规则初筛。
+每次最多分析30条、每批5条，不限制日报推送总数。第三方服务的用量和费用由其账户结算。
+
 ## 消息模板
 AI 专家任务雷达 | AI Expert Job Radar
 新增匹配任务：N
