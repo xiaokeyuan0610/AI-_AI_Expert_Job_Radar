@@ -27,9 +27,9 @@
     "id": "platform_3",
     "name": "CoreXpertData",
     "url": "https://www.corexpertdata.com/operation/s/recruitment-square",
-    "enabled": false,
-    "method": "pending_review",
-    "review_status": "公开页面可访问，但只返回动态页面外壳；已检查页面模块，尚未验证匿名招募接口。保持禁用，不表示没有岗位",
+    "enabled": true,
+    "method": "corexpert_session",
+    "review_status": "用户授权会话列表读取；分页检索全部项目，云端凭据由COREXPERT_COOKIE提供",
     "checked_on": "2026-11-06",
     "web_check": "网页工具无法访问；不能据此认定需要登录"
   },

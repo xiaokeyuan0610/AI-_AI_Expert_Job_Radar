@@ -57,5 +57,7 @@ def message(jobs, statuses, demo=False):
         lines.append("检查失败：" + "、".join(failures))
     if any("TLABEL_COOKIE" in status for status in statuses):
         lines.append("腾讯登录失效或未配置，请登录后更新 GitHub Secret TLABEL_COOKIE。")
+    if any("COREXPERT_COOKIE" in status for status in statuses):
+        lines.append("CoreXpert会话失效或访问受限，请检查 GitHub Secret COREXPERT_COOKIE。")
     return {"msg_type": "text", "content": {"text": "\n".join(lines)}}
 

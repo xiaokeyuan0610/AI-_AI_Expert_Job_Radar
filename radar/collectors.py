@@ -20,6 +20,9 @@ class LocalJsonCollector:
 
 
 def collect(platform):
+    if platform["method"] == "corexpert_session":
+        from .corexpert import collect_corexpert
+        return collect_corexpert(platform)
     if platform["method"] == "tencent_session":
         from .tencent import collect_tencent
         return collect_tencent(platform)
