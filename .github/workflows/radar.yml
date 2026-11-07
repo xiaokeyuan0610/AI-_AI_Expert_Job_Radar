@@ -28,6 +28,7 @@ jobs:
         env:
           FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
           FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
+          TLABEL_COOKIE: ${{ secrets.TLABEL_COOKIE }}
       - uses: actions/cache/save@v4
         if: always()
         with:

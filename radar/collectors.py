@@ -20,6 +20,9 @@ class LocalJsonCollector:
 
 
 def collect(platform):
+    if platform["method"] == "tencent_session":
+        from .tencent import collect_tencent
+        return collect_tencent(platform)
     if platform["method"] in {"appen_public", "talents_public", "fellow_public"}:
         from .public_sources import collect_public
         return collect_public(platform)

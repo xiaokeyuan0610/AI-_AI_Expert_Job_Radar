@@ -67,9 +67,9 @@
     "id": "platform_7",
     "name": "腾讯 TLabel 混元智囊团",
     "url": "https://tlabel.tencent.com/expert/recruit",
-    "enabled": false,
-    "method": "pending_review",
-    "review_status": "匿名列表请求返回code=13，要求重新登录；待官方授权接入",
+    "enabled": true,
+    "method": "tencent_session",
+    "review_status": "用户授权会话读取，凭据由GitHub Secret提供；有效期以实际接口响应为准，失效提示更新",
     "checked_on": "2026-11-07"
   },
   {

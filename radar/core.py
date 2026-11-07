@@ -55,5 +55,7 @@ def message(jobs, statuses, demo=False):
     lines.extend(["", f"已检查{successful}个平台｜其余未接入", "方向初筛，资历与报酬以详情为准。"])
     if failures:
         lines.append("检查失败：" + "、".join(failures))
+    if any("TLABEL_COOKIE" in status for status in statuses):
+        lines.append("腾讯登录失效或未配置，请登录后更新 GitHub Secret TLABEL_COOKIE。")
     return {"msg_type": "text", "content": {"text": "\n".join(lines)}}
 

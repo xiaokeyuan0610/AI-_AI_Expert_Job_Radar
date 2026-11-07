@@ -5,6 +5,7 @@ from .collectors import collect
 from .core import identity, message, score
 from .feishu import send
 from . import __version__
+from .tencent import LoginRequired
 
 
 def run(config, rules, state_path, push=False, demo=False, test_send=False):
@@ -26,6 +27,9 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
                 key = identity(row)
                 if points >= rules["threshold"] and key not in seen:
                     pending[key] = dict(row, score=points, reasons=reasons, platform_name=name)
+        except LoginRequired:
+            failed = True
+            statuses.append(name + ": 采集失败，请重新登录腾讯并更新 GitHub Secret TLABEL_COOKIE")
         except Exception:
             failed = True
             statuses.append(name + ": 采集失败（不是无任务）")
