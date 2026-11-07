@@ -26,4 +26,5 @@ class DigestTests(unittest.TestCase):
             run([{"id": "one", "enabled": True}],
                 {"threshold": 0, "categories": [], "batch_size": 10}, state, True)
             self.assertEqual(len(json.loads(state.read_text())), 12)
-            self.assertEqual(send.call_count, 2)
+            self.assertEqual(send.call_count, 4)
+            self.assertTrue(all(call.args[0]["msg_type"] == "interactive" for call in send.call_args_list))

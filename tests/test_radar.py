@@ -30,9 +30,9 @@ class RadarTests(unittest.TestCase):
             self.assertFalse(state.exists())
             with patch("radar.__main__.send") as sender:
                 run(config, rules, state, True)
-                self.assertIn("新增匹配任务：1", sender.call_args.args[0]["content"]["text"])
+                self.assertIn("本卡 1 个相关项目", sender.call_args.args[0]["card"]["elements"][0]["text"]["content"])
                 run(config, rules, state, True)
-                self.assertIn("新增匹配任务：0", sender.call_args.args[0]["content"]["text"])
+                self.assertIn("本卡 0 个相关项目", sender.call_args.args[0]["card"]["elements"][0]["text"]["content"])
 
     def test_collector_failure(self):
         with tempfile.TemporaryDirectory() as folder:

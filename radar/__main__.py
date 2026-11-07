@@ -9,6 +9,7 @@ from .tencent import LoginRequired
 from .corexpert import CoreSessionRequired
 from .ai_analysis import enrich_jobs
 from .details import deadline_at
+from .cards import card_message
 from datetime import datetime, timezone
 
 
@@ -50,24 +51,20 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
     ordered = sorted(pending.items(), key=lambda item: (item[1]["platform_name"], -item[1]["score"]))
     enriched = enrich_jobs([job for _, job in ordered])
     ordered = [(key, job) for (key, _), job in zip(ordered, enriched)]
-    batch_size = rules.get("batch_size", 10)
+    batch_size = min(rules.get("batch_size", 10), 3)
     if batch_size < 1:
         raise ValueError("batch_size must be positive")
     batches = []
     for entry in ordered:
         candidate = (batches[-1] if batches else []) + [entry]
-        oversized = len(json.dumps(message([job for _, job in candidate], statuses, demo), ensure_ascii=False).encode()) > 17500
+        oversized = len(json.dumps(card_message([job for _, job in candidate], statuses), ensure_ascii=False).encode()) > 17500
         if (not batches or len(batches[-1]) >= batch_size
                 or batches[-1][-1][1]["platform_name"] != entry[1]["platform_name"] or oversized):
             batches.append([])
         batches[-1].append(entry)
     batches = batches or [[]]
     for batch in batches:
-        payload = message([row for _, row in batch], statuses, demo)
-        if test_send:
-            payload["content"]["text"] = payload["content"]["text"].replace(
-                "新增匹配任务：", "当前相关任务：")
-            payload["content"]["text"] = "【版本测试｜实时岗位快照】\n" + payload["content"]["text"]
+        payload = card_message([row for _, row in batch], statuses, test=test_send)
         if push:
             send(payload)
             if test_send:
@@ -78,7 +75,7 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
             temporary.write_text(json.dumps(sorted(seen)), encoding="utf-8")
             temporary.replace(state_path)
         else:
-            print(json.dumps(payload, ensure_ascii=False, indent=2))
+            print(json.dumps(payload, ensure_ascii=True, indent=2))
     return 1 if failed else 0
 
 

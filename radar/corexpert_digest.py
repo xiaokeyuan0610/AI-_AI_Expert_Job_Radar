@@ -7,6 +7,7 @@ from .feishu import send
 from .recommendations import DESIGN_TERMS, VISUAL_TERMS, contains, recommendation, ai_workflow
 from .details import pay_text, deadline_text
 from .ai_analysis import enrich_jobs
+from .cards import card_message
 
 
 def suitability(job):
@@ -66,18 +67,12 @@ def main():
     analyzed = {job["source_id"]: job for job in enriched}
     jobs = [analyzed.get(job["source_id"], job) for job in jobs]
     sections, selected = build_digest(jobs)
-    batches = []
-    current = ""
-    for section in sections:
-        if len((current + "\n" + section).encode()) > 14000:
-            batches.append(current)
-            current = f"【CoreXpert 专项测试续篇】v{__version__}\n" + section
-        else:
-            current += ("\n" if current else "") + section
-    batches.append(current)
-    for text in batches:
+    cards = [dict(job, platform_name="CoreXpert", url=job.get("url") or
+                  "https://www.corexpertdata.com/operation/s/recruitment-square") for job, _ in selected]
+    batches = [cards[start:start + 3] for start in range(0, len(cards), 3)] or [[]]
+    for index, batch in enumerate(batches, 1):
         if args.send:
-            send({"msg_type": "text", "content": {"text": text}})
+            send(card_message(batch, test=True, checked=len(jobs), part=f"{index}/{len(batches)}"))
     print(f"Checked {len(jobs)} jobs; selected {len(selected)}; sent {len(batches) if args.send else 0} messages.")
     for job, fit in selected:
         print(job["title"], fit[0], job["salary"])
