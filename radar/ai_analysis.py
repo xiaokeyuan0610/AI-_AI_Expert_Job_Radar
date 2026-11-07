@@ -51,7 +51,8 @@ def analyze_batch(jobs, profile, key, model, base_url="https://api.openai.com/v1
     else:
         body["max_tokens"] = 6500
     request = urllib.request.Request(base_url.rstrip("/") + "/chat/completions",
-        data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "Authorization": "Bearer " + key})
+        data=json.dumps(body).encode(), headers={"Content-Type": "application/json", "Authorization": "Bearer " + key,
+            "User-Agent": "AI-Expert-Job-Radar/0.4.0", "Accept": "application/json"})
     with urllib.request.build_opener(NoRedirect).open(request, timeout=90) as response:
         result = json.load(response)
     choice = result["choices"][0]
@@ -109,7 +110,8 @@ def enrich_jobs(jobs):
                 print("AI HTTP status: " + str(error.code), flush=True)
                 # Only print predefined diagnostic labels, never raw provider responses.
                 detail = error.read(8192).decode("utf-8", errors="replace").lower()
-                labels = [word for word in ("insufficient_quota", "invalid_api_key", "model_not_found", "unsupported", "no available channel", "无可用渠道", "余额不足", "无权", "模型不存在") if word in detail]
+                labels = [word for word in ("cloudflare", "forbidden", "access denied", "ip not", "permission", "token", "insufficient_quota", "invalid_api_key", "model_not_found", "unsupported", "no available channel", "无可用渠道", "余额不足", "无权", "模型不存在") if word in detail]
+                print("AI response format: " + ("json" if "json" in error.headers.get("Content-Type", "") else "non-json"), flush=True)
                 if labels:
                     print("AI error category: " + ", ".join(labels), flush=True)
             enriched.extend(dict(job, analysis_status="规则初筛，AI分析暂不可用") for job in jobs[start:])
