@@ -1,0 +1,36 @@
+name: Daily radar
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 1 * * *'
+permissions:
+  contents: read
+concurrency:
+  group: daily-radar
+  cancel-in-progress: false
+jobs:
+  check:
+    if: vars.RADAR_ENABLED == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m unittest discover -s tests -v
+      - uses: actions/cache/restore@v4
+        with:
+          path: state
+          key: radar-state-${{ github.run_id }}-${{ github.run_attempt }}
+          restore-keys: radar-state-
+      - run: python -m radar --send
+        env:
+          FEISHU_WEBHOOK_URL: ${{ secrets.FEISHU_WEBHOOK_URL }}
+          FEISHU_SIGNING_SECRET: ${{ secrets.FEISHU_SIGNING_SECRET }}
+      - uses: actions/cache/save@v4
+        if: always()
+        with:
+          path: state
+          key: radar-state-${{ github.run_id }}-${{ github.run_attempt }}
+

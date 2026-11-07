@@ -1,0 +1,93 @@
+{
+  "threshold": 20,
+  "batch_size": 10,
+  "categories": [
+    {
+      "name": "视频素材制作（邻近方向）",
+      "weight": 20,
+      "terms": ["vlog", "视频拍摄", "摄影摄像"]
+    },
+    {
+      "name": "3D视觉评审（专业经验待核实）",
+      "weight": 20,
+      "terms": ["blender", "3D建模"]
+    },
+    {
+      "name": "多模态评测",
+      "weight": 25,
+      "terms": [
+        "multimodal",
+        "多模态"
+      ]
+    },
+    {
+      "name": "影视与视觉美学",
+      "weight": 20,
+      "terms": [
+        "visual aesthetics",
+        "cinema",
+        "视觉美学",
+        "影视"
+      ]
+    },
+    {
+      "name": "视频生成",
+      "weight": 20,
+      "terms": [
+        "video generation",
+        "视频生成"
+      ]
+    },
+    {
+      "name": "图像编辑",
+      "weight": 15,
+      "terms": [
+        "image editing",
+        "图像编辑"
+      ]
+    },
+    {
+      "name": "视频理解与标注",
+      "weight": 15,
+      "terms": [
+        "video understanding",
+        "video annotation",
+        "视频理解",
+        "视频标注"
+      ]
+    },
+    {
+      "name": "数据质量",
+      "weight": 10,
+      "terms": [
+        "data quality",
+        "数据质量"
+      ]
+    },
+    {
+      "name": "Rubric",
+      "weight": 10,
+      "terms": [
+        "rubric",
+        "评分标准"
+      ]
+    },
+    {
+      "name": "Benchmark",
+      "weight": 10,
+      "terms": [
+        "benchmark",
+        "基准评测"
+      ]
+    },
+    {
+      "name": "未来RL环境",
+      "weight": 5,
+      "terms": [
+        "rl environment",
+        "reinforcement learning environment",
+        "强化学习环境"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,59 @@
+import hashlib
+import re
+from . import __version__
+from urllib.parse import urlsplit, urlunsplit, parse_qsl, urlencode
+
+
+def identity(job):
+    if job.get("source_id"):
+        return hashlib.sha256(job["source_id"].encode()).hexdigest()
+    parts = urlsplit(job["url"])
+    query = sorted((key, value) for key, value in parse_qsl(parts.query)
+                   if not key.lower().startswith("utm_") and key.lower() not in {"ref", "source"})
+    canonical = urlunsplit((parts.scheme.lower(), parts.netloc.lower(),
+                           parts.path.rstrip("/"), urlencode(query), ""))
+    return hashlib.sha256(canonical.encode()).hexdigest()
+
+
+def score(job, rules):
+    text = (job["title"] + " " + job["description"]).lower()
+    reasons = []
+    total = 0
+    for rule in rules["categories"]:
+        matches = [term for term in rule["terms"] if
+                   (re.search(r"(?<![a-z0-9])" + re.escape(term.lower()) + r"(?![a-z0-9])", text)
+                    if term.isascii() else term in text)]
+        if matches:
+            total += rule["weight"]
+            reasons.append(rule["name"])
+    return min(total, 100), reasons
+
+
+def summarize(job):
+    text = re.sub(r"\s+", " ", job.get("description", "")).strip()
+    sentences = [part.strip() for part in re.split(r"[。；\n]", text) if part.strip()]
+    useful = next((part for part in sentences if any(word in part for word in
+                   ("评审", "评测", "标注", "设计", "审核", "拍摄", "制作", "质检"))), "")
+    return (useful[:90] + ("…" if len(useful) > 90 else "")) or "工作内容请查看岗位详情。"
+
+
+def message(jobs, statuses, demo=False):
+    lines = [f"AI 专家任务雷达 v{__version__} | AI Expert Job Radar" + ("【演示数据】" if demo else ""),
+             f"新增匹配任务：{len(jobs)}"]
+    current_platform = None
+    for number, job in enumerate(jobs, 1):
+        platform = job.get("platform_name", "岗位推荐")
+        if platform != current_platform:
+            lines.extend(["", "【" + platform + "】"])
+            current_platform = platform
+        salary = job.get("salary", "报酬见详情").replace("hour", "小时").replace("BY_COUNT", "按量").replace("BY_TIME", "按时")
+        lines.extend(["", f'{number}. {job["title"][:70]}', "做什么：" + summarize(job), "报酬：" + salary, job["url"]])
+    if not jobs:
+        lines.append("今天暂无新的匹配机会。")
+    successful = sum(": 读取 " in status for status in statuses)
+    failures = [status.split(":", 1)[0] for status in statuses if "采集失败" in status]
+    lines.extend(["", f"已检查{successful}个平台｜其余未接入", "方向初筛，资历与报酬以详情为准。"])
+    if failures:
+        lines.append("检查失败：" + "、".join(failures))
+    return {"msg_type": "text", "content": {"text": "\n".join(lines)}}
+
