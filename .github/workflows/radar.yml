@@ -1,6 +1,11 @@
 name: Daily radar
 on:
   workflow_dispatch:
+    inputs:
+      force_send:
+        description: 'Force a fresh report even if today already succeeded'
+        type: boolean
+        default: false
   schedule:
     - cron: '0 1 * * *'
     - cron: '17,37 1 * * *'
@@ -20,7 +25,7 @@ jobs:
         id: delivery
         with:
           script: |
-            if (context.eventName !== 'schedule') {
+            if (context.eventName === 'workflow_dispatch' && context.payload.inputs?.force_send === 'true') {
               core.setOutput('needed', 'true');
               return;
             }
