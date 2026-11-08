@@ -3,8 +3,10 @@ on:
   workflow_dispatch:
   schedule:
     - cron: '0 1 * * *'
+    - cron: '17,37 1 * * *'
 permissions:
   contents: read
+  actions: read
 concurrency:
   group: daily-radar
   cancel-in-progress: false
@@ -14,17 +16,40 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
+      - uses: actions/github-script@v7
+        id: delivery
+        with:
+          script: |
+            if (context.eventName !== 'schedule') {
+              core.setOutput('needed', 'true');
+              return;
+            }
+            const day = date => new Date(new Date(date).getTime() + 8 * 3600000).toISOString().slice(0, 10);
+            const today = day(new Date());
+            const {data} = await github.rest.actions.listWorkflowRuns({
+              ...context.repo, workflow_id: 'radar.yml', per_page: 100
+            });
+            const delivered = data.workflow_runs.some(run =>
+              run.id !== context.runId && run.head_branch === 'main' &&
+              run.conclusion === 'success' && day(run.created_at) === today);
+            core.setOutput('needed', delivered ? 'false' : 'true');
+            core.info(delivered ? 'Daily report already succeeded; skipping.' : 'Daily report needed.');
       - uses: actions/checkout@v4
+        if: steps.delivery.outputs.needed == 'true'
       - uses: actions/setup-python@v5
+        if: steps.delivery.outputs.needed == 'true'
         with:
           python-version: '3.12'
       - run: python -m unittest discover -s tests -v
+        if: steps.delivery.outputs.needed == 'true'
       - uses: actions/cache/restore@v4
+        if: steps.delivery.outputs.needed == 'true'
         with:
           path: state
           key: radar-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: radar-state-
       - run: python -m radar --send
+        if: steps.delivery.outputs.needed == 'true'
         env:
           AI_BASE_URL: https://api.metarouters.org/v1
           AI_API_KEY: ${{ secrets.AI_API_KEY }}
@@ -37,7 +62,7 @@ jobs:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           OPENAI_MODEL: ${{ vars.OPENAI_MODEL || 'gpt-5-mini' }}
       - uses: actions/cache/save@v4
-        if: always()
+        if: always() && steps.delivery.outputs.needed == 'true'
         with:
           path: state
           key: radar-state-${{ github.run_id }}-${{ github.run_attempt }}
