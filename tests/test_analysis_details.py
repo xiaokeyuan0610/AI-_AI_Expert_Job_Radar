@@ -8,6 +8,19 @@ from radar.recommendations import recommendation
 
 
 class AnalysisDetailsTests(unittest.TestCase):
+    @patch.dict("os.environ", {"AI_BASE_URL": "https://api.metarouters.org/v1", "AI_API_KEY": "test", "AI_MODEL": "test"}, clear=True)
+    @patch("radar.ai_analysis.load_profile", return_value={})
+    @patch("radar.ai_analysis.analyze_batch")
+    def test_invalid_batch_does_not_poison_later_jobs(self, analyze, profile):
+        jobs = [{"title": str(index)} for index in range(4)]
+        analyze.side_effect = [ValueError("invalid"), [dict(jobs[0], analysis={"ok": True})],
+                               ValueError("invalid"), [dict(jobs[2], analysis={"ok": True})],
+                               [dict(jobs[3], analysis={"ok": True})]]
+        results = enrich_jobs(jobs)
+        self.assertEqual(len(results), 4)
+        self.assertIn("校验失败", results[1]["analysis_status"])
+        self.assertTrue(results[3]["analysis"])
+
     @patch.dict("os.environ", {"AI_BASE_URL": "https://api.metarouters.org/v1", "AI_API_KEY": "", "OPENAI_API_KEY": "must-not-send"}, clear=True)
     @patch("radar.ai_analysis.analyze_batch")
     def test_alternate_service_never_uses_openai_key(self, analyze):

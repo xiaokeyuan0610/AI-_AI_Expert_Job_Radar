@@ -131,6 +131,16 @@ def enrich_jobs(jobs):
             print(f"AI automation plans validated: {len(batch)}", flush=True)
         except Exception as error:
             print("AI analysis failed: " + type(error).__name__, flush=True)
+            if isinstance(error, (ValueError, KeyError, TypeError)):
+                print("AI batch validation failed; retrying individual jobs.", flush=True)
+                for job in batch:
+                    try:
+                        enriched.extend(analyze_batch([job], profile, key, model, base_url))
+                    except Exception as single_error:
+                        print("AI individual retry failed: " + type(single_error).__name__, flush=True)
+                        reason = "AI返回格式校验失败" if isinstance(single_error, (ValueError, KeyError, TypeError)) else "AI调用失败"
+                        enriched.append(dict(job, analysis_status=reason + "，本次未生成方案"))
+                continue
             if isinstance(error, urllib.error.HTTPError):
                 print("AI HTTP status: " + str(error.code), flush=True)
                 # Only print predefined diagnostic labels, never raw provider responses.

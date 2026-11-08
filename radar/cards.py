@@ -57,7 +57,7 @@ def card_message(jobs, statuses=(), *, test=False, checked=None, part=None):
                 if analysis.get("ai_permission") != "allowed":
                     plan += "\n平台是否允许AI尚待确认。"
         else:
-            plan = "**⚙ 自动化实施方案**\n尚未生成，需AI分析岗位细节后判断。"
+            plan = "**⚙ 自动化实施方案**\n" + brief(job.get("analysis_status") or "尚未生成，需AI分析岗位细节后判断。", 100)
         elements.append({"tag": "div", "text": {"tag": "lark_md", "content": plan}})
         url = job.get("url", "")
         if urlsplit(url).scheme == "https":
