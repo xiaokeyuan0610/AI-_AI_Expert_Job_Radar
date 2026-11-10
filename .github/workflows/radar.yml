@@ -34,9 +34,19 @@ jobs:
             const {data} = await github.rest.actions.listWorkflowRuns({
               ...context.repo, workflow_id: 'radar.yml', per_page: 100
             });
-            const delivered = data.workflow_runs.some(run =>
+            const candidates = data.workflow_runs.filter(run =>
               run.id !== context.runId && run.head_branch === 'main' &&
               run.conclusion === 'success' && day(run.created_at) === today);
+            let delivered = false;
+            for (const run of candidates) {
+              const {data: jobs} = await github.rest.actions.listJobsForWorkflowRun({
+                ...context.repo, run_id: run.id, per_page: 100
+              });
+              delivered = jobs.jobs.some(job => job.steps?.some(step =>
+                ['Send daily report', 'Run python -m radar --send'].includes(step.name) &&
+                step.conclusion === 'success'));
+              if (delivered) break;
+            }
             core.setOutput('needed', delivered ? 'false' : 'true');
             core.info(delivered ? 'Daily report already succeeded; skipping.' : 'Daily report needed.');
       - uses: actions/checkout@v4
@@ -53,7 +63,8 @@ jobs:
           path: state
           key: radar-state-${{ github.run_id }}-${{ github.run_attempt }}
           restore-keys: radar-state-
-      - run: python -m radar --send
+      - name: Send daily report
+        run: python -m radar --send
         if: steps.delivery.outputs.needed == 'true'
         env:
           AI_BASE_URL: https://api.metarouters.org/v1

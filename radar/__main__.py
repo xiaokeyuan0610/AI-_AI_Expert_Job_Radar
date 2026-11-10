@@ -76,6 +76,8 @@ def run(config, rules, state_path, push=False, demo=False, test_send=False):
             temporary.replace(state_path)
         else:
             print(json.dumps(payload, ensure_ascii=True, indent=2))
+    if push:
+        print(f"FEISHU_DELIVERY_CONFIRMED messages={len(batches)} jobs={len(ordered)} collector_failures={int(failed)}", flush=True)
     return 1 if failed else 0
 
 
