@@ -7,12 +7,12 @@ from radar.recommendations import recommendation, ai_workflow
 
 
 class RecommendationTests(unittest.TestCase):
-    def test_text_and_history_can_match_independently(self):
+    def test_removed_text_and_history_do_not_match_independently(self):
         rules = json.loads(Path("config/matching.json").read_text(encoding="utf-8"))
         for title in ("中文写作专家", "文案校对", "文本质量评测", "世界史专家", "通史出题", "历史学专家"):
             job = {"title": title, "description": "任务要求待确认"}
-            self.assertGreaterEqual(score(job, rules)[0], rules["threshold"])
-            self.assertIsNotNone(suitability(job))
+            self.assertLess(score(job, rules)[0], rules["threshold"])
+            self.assertIsNone(suitability(job))
         for title in ("历史记录数据库", "代码编辑器开发"):
             self.assertEqual(score({"title": title, "description": ""}, rules)[0], 0)
 

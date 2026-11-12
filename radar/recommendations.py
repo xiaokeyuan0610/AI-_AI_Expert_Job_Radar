@@ -3,10 +3,6 @@ DESIGN_TERMS = ("建筑", "室内", "空间设计", "空间规划", "景观", "�
 VISUAL_TERMS = ("影视", "摄影", "视觉", "美学", "图像", "视频", "媒体", "文化", "娱乐",
                 "工业设计", "ui/ux", "blender", "3d美术")
 from .details import deadline_at
-TEXT_HISTORY_TERMS = ("文字编辑", "文本编辑", "文案", "校对", "润色", "中文写作", "创意写作", "文本评测",
-                      "文本质量", "文本标注", "内容审校", "编辑出版", "通史", "历史学", "历史专家", "历史领域",
-                      "历史研究", "中国史", "世界史", "文化史", "建筑史", "史料", "人文社科",
-                      "copyediting", "proofreading", "text evaluation", "general history", "world history")
 
 
 def contains(text, terms):
@@ -14,7 +10,7 @@ def contains(text, terms):
 
 
 def recommendation(job):
-    direct = contains(job["title"], DESIGN_TERMS + VISUAL_TERMS + TEXT_HISTORY_TERMS)
+    direct = contains(job["title"], DESIGN_TERMS + VISUAL_TERMS)
     analysis = job.get("analysis", {})
     direction = round(analysis["fit_score"] * 0.4) if analysis else (40 if direct else 25)
     qualification = 25 if job.get("qualification_confirmed") is True else 10
