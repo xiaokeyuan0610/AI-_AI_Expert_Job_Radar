@@ -17,7 +17,17 @@ class ProfileTests(unittest.TestCase):
             directory = Path(folder)
             (directory / "profile.json").write_text('{"interests": ["generic"]}')
             (directory / "profile.private.json").write_text('{"skills": ["private-skill"]}')
-            self.assertEqual(load_profile(directory), {"skills": ["private-skill"]})
+            self.assertEqual(load_profile(directory), {"skills": ["private-skill"], "interests": ["generic"]})
+
+    @patch.dict("os.environ", {"USER_PROFILE_JSON": '{"education":["private-degree"],"interests":["original"],"phone":"private"}'})
+    def test_new_preferences_reach_secret_profile_without_exposing_private_facts(self):
+        with tempfile.TemporaryDirectory() as folder:
+            directory = Path(folder)
+            (directory / "profile.json").write_text('{"interests":["new-writing-interest"]}')
+            result = load_profile(directory)
+            self.assertEqual(result["interests"], ["new-writing-interest", "original"])
+            self.assertEqual(result["education"], ["private-degree"])
+            self.assertNotIn("phone", result)
 
     @patch.dict("os.environ", {"USER_PROFILE_JSON": "invalid"})
     def test_invalid_secret_is_not_silently_ignored(self):

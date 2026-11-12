@@ -18,4 +18,10 @@ def load_profile(directory=Path("config")):
     if not isinstance(profile, dict):
         raise ValueError("Matching profile must be an object")
     # Unrecognized fields (name, contact details, raw resume, etc.) are excluded.
-    return {key: value for key, value in profile.items() if key in FIELDS}
+    result = {key: value for key, value in profile.items() if key in FIELDS}
+    public = directory / "profile.json"
+    if public.exists():
+        preferences = json.loads(public.read_text(encoding="utf-8"))
+        interests = preferences.get("interests", []) + result.get("interests", [])
+        result["interests"] = list(dict.fromkeys(interests))
+    return result

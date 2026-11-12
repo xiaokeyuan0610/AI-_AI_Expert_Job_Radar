@@ -8,6 +8,7 @@ from .recommendations import DESIGN_TERMS, VISUAL_TERMS, contains, recommendatio
 from .details import pay_text, deadline_text
 from .ai_analysis import enrich_jobs
 from .cards import card_message
+from .recommendations import TEXT_HISTORY_TERMS
 
 
 def suitability(job):
@@ -18,8 +19,10 @@ def suitability(job):
         return "优先核对", "建筑、空间或室内设计方向，可结合专业经历评估"
     if contains(title, VISUAL_TERMS):
         return "优先核对", "影视视觉、数字内容或设计类专业任务"
+    if contains(title, TEXT_HISTORY_TERMS):
+        return "可拓展", "新增文字编辑、文本评测或通史方向，需核对具体专业门槛"
     if "多学科" in title and any(term in job.get("qualification", job["description"])
-                                 for term in ("视觉传达", "工业设计", "影视", "建筑", "室内", "城乡规划", "风景园林")):
+                                 for term in ("视觉传达", "工业设计", "影视", "建筑", "室内", "城乡规划", "风景园林", "历史学", "中国史", "世界史", "编辑出版", "中文写作")):
         return "优先核对", "招募专业包含视觉、建筑或设计方向，需要核对学历背景"
     if any(term in title for term in ("企业场景", "办公工具", "多职业")):
         return "可拓展", "可结合真实工作经验参与任务设计或成果评价"
