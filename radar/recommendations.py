@@ -1,7 +1,7 @@
 DESIGN_TERMS = ("建筑", "室内", "空间设计", "空间规划", "景观", "城乡规划", "风景园林",
                 "bim", "revit", "sketchup", "rhino", "autocad")
 VISUAL_TERMS = ("影视", "摄影", "视觉", "美学", "图像", "视频", "媒体", "文化", "娱乐",
-                "工业设计", "ui/ux", "blender", "3d美术")
+                "工业设计", "ui/ux", "blender", "3d美术", "文生图", "text-to-image", "图片标注", "图片质量")
 from .details import deadline_at
 
 

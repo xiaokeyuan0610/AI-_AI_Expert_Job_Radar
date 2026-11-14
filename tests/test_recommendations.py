@@ -7,6 +7,13 @@ from radar.recommendations import recommendation, ai_workflow
 
 
 class RecommendationTests(unittest.TestCase):
+    def test_text_to_image_quality_annotation_is_included(self):
+        rules = json.loads(Path("config/matching.json").read_text(encoding="utf-8"))
+        for title in ("文生图-质量标注", "图像质量评分", "图片标注", "美学评测", "Text-to-image evaluation"):
+            job = {"title": title, "description": "美学"}
+            self.assertGreaterEqual(score(job, rules)[0], rules["threshold"])
+            self.assertIsNotNone(suitability(job))
+
     def test_removed_text_and_history_do_not_match_independently(self):
         rules = json.loads(Path("config/matching.json").read_text(encoding="utf-8"))
         for title in ("中文写作专家", "文案校对", "文本质量评测", "世界史专家", "通史出题", "历史学专家"):
